@@ -24,12 +24,21 @@ module Slackistrano
   #
   #
   def self.post_as_slackbot(team: nil, token: nil, webhook: nil, payload: {})
-    uri = URI(URI.encode("https://#{team}.slack.com/services/hooks/slackbot?token=#{token}&channel=#{payload[:channel]}"))
-
+    uri = URI(URI.encode("https://slack.com/api/chat.postMessage"))
     text = payload[:attachments].collect { |a| a[:text] }.join("\n")
 
+    query = {
+      :team => team,
+      :token => token,
+      :text => text,
+      :channel => payload[:channel],
+      :username => payload[:username]
+    }
+
     Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
-      http.request_post uri.request_uri, text
+      request = Net::HTTP::Post.new(uri.request_uri)
+      request.set_form_data(query)
+      http.request request
     end
   end
 
